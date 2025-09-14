@@ -15,19 +15,21 @@
 
 ### 2. Create Admin Users
 
-You have two options to create admin users:
+You have two options to create the first admin user:
 
 #### Option A: Using the Web Application (Recommended)
 1. Go to `http://localhost:3000/admin`
-2. Click "Need to create an admin account? Create Account"
-3. Enter email and password for the admin
-4. Click "Create Admin Account"
+2. Enter the desired email and password for the first admin account
+3. Click "Sign In"
+4. The system will automatically create the first admin account if no users exist
 
 #### Option B: Using Firebase Console
 1. In Firebase Console, go to **Authentication** > **Users**
 2. Click **Add user**
 3. Enter email and password for the admin
 4. Click **Add user**
+
+**Note:** After the first admin account is created, new accounts can only be created through the Firebase Console or Admin SDK. The web application will only allow sign-in for existing accounts.
 
 ### 3. Test the Authentication
 
@@ -64,10 +66,11 @@ service cloud.firestore {
 ### Authentication Flow
 
 1. **Admin Access**: When visiting `/admin`, the user is prompted to log in
-2. **Login Process**: Users authenticate with email/password
-3. **Session Management**: Firebase handles session persistence
-4. **Logout**: Admins can logout using the logout button
-5. **Protection**: Only authenticated users can access admin features
+2. **First Admin Creation**: If no admin accounts exist, the system automatically creates the first admin account during the initial login attempt
+3. **Login Process**: Users authenticate with email/password
+4. **Session Management**: Firebase handles session persistence
+5. **Logout**: Admins can logout using the logout button
+6. **Protection**: Only authenticated users can access admin features
 
 ### User Roles
 
@@ -77,6 +80,8 @@ service cloud.firestore {
 
 ### Security Features
 
+- **Automatic first admin setup**: Automatically creates the first admin account when no users exist
+- **Controlled account creation**: After the first admin is created, new accounts can only be created through Firebase Console
 - **Session persistence**: Users stay logged in across browser sessions
 - **Automatic logout**: Logout functionality included
 - **Protected routes**: Admin panel requires authentication

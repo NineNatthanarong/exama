@@ -9,7 +9,6 @@ const Login = ({ onLoginSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showCreateAdmin, setShowCreateAdmin] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -38,32 +37,15 @@ const Login = ({ onLoginSuccess }) => {
     }
   };
 
-  const handleCreateAdmin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const user = await AuthService.createUser(formData.email, formData.password);
-      console.log('Admin account created:', user.email);
-      onLoginSuccess(user);
-    } catch (error) {
-      console.error('Create admin error:', error);
-      setError(getAuthErrorMessage(error.code));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="login-container">
       <div className="login-content">
         <div className="login-header">
           <h1>Admin Access</h1>
-          <p>{showCreateAdmin ? 'Create Admin Account' : 'Sign in to access the admin panel'}</p>
+          <p>Sign in to access the admin panel</p>
         </div>
 
-        <form onSubmit={showCreateAdmin ? handleCreateAdmin : handleLogin} className="login-form">
+        <form onSubmit={handleLogin} className="login-form">
           <div className="form-group">
             <label htmlFor="email">Email Address:</label>
             <input
@@ -106,37 +88,16 @@ const Login = ({ onLoginSuccess }) => {
             disabled={loading}
             className="btn btn-primary login-btn"
           >
-            {loading ? 
-              (showCreateAdmin ? 'Creating Account...' : 'Signing In...') : 
-              (showCreateAdmin ? 'Create Admin Account' : 'Sign In')
-            }
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
-
-        <div className="login-footer">
-          <button
-            type="button"
-            onClick={() => {
-              setShowCreateAdmin(!showCreateAdmin);
-              setError('');
-              setFormData({ email: '', password: '' });
-            }}
-            className="toggle-mode-btn"
-            disabled={loading}
-          >
-            {showCreateAdmin ? 
-              'Already have an admin account? Sign In' : 
-              'Need to create an admin account? Create Account'
-            }
-          </button>
-        </div>
 
         <div className="login-info">
           <h3>Admin Access Information:</h3>
           <ul>
             <li>Only administrators can access this panel</li>
             <li>All authenticated users have admin privileges</li>
-            <li>Use the "Create Account" option for initial setup</li>
+            <li>If this is the first time, account will be created automatically</li>
             <li>Keep your admin credentials secure</li>
           </ul>
         </div>

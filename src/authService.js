@@ -1,20 +1,68 @@
-import { auth } from './firebase';
+import { auth, db } from './firebase';
 import { 
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
   createUserWithEmailAndPassword 
 } from 'firebase/auth';
+import { 
+  doc, 
+  getDoc, 
+  setDoc 
+} from 'firebase/firestore';
 
 export class AuthService {
   
-  // Sign in with email and password
+  // Check if first admin has been created
+  static async hasFirstAdmin() {
+    try {
+      const adminStatusRef = doc(db, 'system', 'adminStatus');
+      const adminStatusDoc = await getDoc(adminStatusRef);
+      return adminStatusDoc.exists() && adminStatusDoc.data().firstAdminCreated === true;
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      return true; // Default to true to prevent accidental account creation
+    }
+  }
+
+  // Mark first admin as created
+  static async markFirstAdminCreated() {
+    try {
+      const adminStatusRef = doc(db, 'system', 'adminStatus');
+      await setDoc(adminStatusRef, { 
+        firstAdminCreated: true,
+        createdAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error marking first admin as created:', error);
+    }
+  }
+
+  // Sign in with email and password - with automatic first admin creation
   static async signIn(email, password) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       return userCredential.user;
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error('Login error:', error);
+      
+      // If user not found and no first admin exists, create the first admin account
+      if (error.code === 'auth/user-not-found') {
+        const hasFirstAdmin = await this.hasFirstAdmin();
+        if (!hasFirstAdmin) {
+          try {
+            console.log('Creating first admin account...');
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            await this.markFirstAdminCreated();
+            console.log('First admin account created successfully');
+            return userCredential.user;
+          } catch (createError) {
+            console.error('Error creating first admin:', createError);
+            throw createError;
+          }
+        }
+      }
+      
       throw error;
     }
   }
@@ -25,17 +73,6 @@ export class AuthService {
       await signOut(auth);
     } catch (error) {
       console.error('Error signing out:', error);
-      throw error;
-    }
-  }
-
-  // Create new user (for admin setup)
-  static async createUser(email, password) {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      return userCredential.user;
-    } catch (error) {
-      console.error('Error creating user:', error);
       throw error;
     }
   }
@@ -87,6 +124,10 @@ export const getAuthErrorMessage = (errorCode) => {
       return 'Password should be at least 6 characters long.';
     case 'auth/network-request-failed':
       return 'Network error. Please check your internet connection.';
+    case 'auth/operation-not-allowed':
+      return 'Email/password authentication is not enabled.';
+    case 'auth/invalid-credential':
+      return 'Invalid email or password. Please check your credentials.';
     default:
       return 'Authentication error. Please try again.';
   }
